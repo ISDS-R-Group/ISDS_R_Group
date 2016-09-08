@@ -1,0 +1,173 @@
+isds_data_table
+========================================================
+author: Eric Bakota, HHD
+date: 2/18/16
+
+Overview of data.table
+========================================================
+
+
+- Created by Matt Dowle
+- Very very fast (10x-500x faster than base R)
+- Entirely in memory
+- data.tables are also classed as data.frames
+
+Overview of data.table (cont'd)
+========================================================
+
+
+- Syntax is less intuitive than dplyr
+- Can't call against a SQL server without loading tables entirely into memory
+- Reads data by using an index key that is sorted (similar to how phonebooks are sorted by last name)
+
+Creating a DT
+========================================================
+
+```{r}
+library(data.table)
+library(dplyr)
+
+(DT <- data.table(Disease = c("Ebola","Zika")
+            ,Age = c(30,5,8,15,22,44)
+            ,INV_TIME = c(21,21,15,51,23,6)
+            ,State = "TX"))
+
+```
+
+
+Syntax
+========================================================
+
+
+- Syntax parallels SQL syntax
+- DT[i, j, by]
+ + i = WHERE
+ + j = SELECT
+ + by = GROUP BY
+
+```{r}
+DT[Age > 10, .(INV_TIME = mean(INV_TIME)), by = .(Disease)]
+```
+
+- <i> Take DT, subset rows using i, then calculate j grouped by by.</i>
+
+Syntax in dplyr
+========================================================
+```{r}
+DT[Age > 10, .(INV = mean(INV_TIME)), by = .(Disease)]
+```
+
+```{r}
+DT %>% filter(Age > 10) %>% group_by(Disease) %>% summarize(INV = mean(INV_TIME))
+```
+
+
+Syntax DT[i,,]
+========================================================
+- i is pretty straightforward
+
+```{r, eval = FALSE}
+DT[Age > 10]
+DT[2:3]
+DT[c(1,3,5)]
+DT[c(1,3,5),,]
+DT[.N]
+```
+
+- .N is equal to nrow(DT)
+```{r}
+DT[.N]
+```
+
+Syntax DT[i,,] (cont'd)
+========================================================
+```{r}
+DT[ Age > 10]
+```
+```{r}
+DT %>% 
+  filter(Age > 10)
+```
+
+Syntax DT[,j,]
+========================================================
+- somewhat analogous to base R snytax of DF[r,c]
+- uses new syntax of .(), which is an alias to list()
+
+```{r, eval}
+DT[,Age,] # returns a vector
+DT[,.(Age),] #returns a DF/DT
+```
+
+Syntax DT[,j,] (cont'd)
+========================================================
+- data.table will also 'summarize' columns
+- structured syntax allows for easy commenting
+```{r}
+DT[,                      # unused i column
+   .(INV = mean(INV_TIME)    # j1 
+   ,Age)                    # j2     
+   ,]                     # by column
+```
+
+Syntax DT[,j,] (cont'd)
+========================================================
+- you can pass functions into j
+```{r, eval = FALSE}
+DT[,plot(Age,INV_TIME),]
+```
+```{r, echo = FALSE}
+invisible(DT[,plot(Age,INV_TIME),]) #produces actual plot
+```
+
+Syntax DT[,,by] 
+========================================================
+- works very similar to the group_by() verb in dplyr
+```{r, eval = FALSE}
+### same output
+DT[,.(INV = mean(INV_TIME)), by = .(Disease)]
+DT %>% 
+  group_by(Disease) %>% 
+  summarize(INV = mean(INV_TIME))
+```
+
+```{r, echo = FALSE}
+DT[,.(INV = mean(INV_TIME)), by = .(Disease)]
+```
+
+Syntax DT[,,by] (cont'd)
+========================================================
+- can also pass functions to by
+```{r}
+DT[,.(INV=mean(INV_TIME)), by = .(Age > 10)]
+```
+
+Intermediate and advanced topics
+========================================================
+- Chaining 
+ + You can chain several DT operations together
+  + DT[operation1][operation2]
+- Subset Data (.SD)
+ + DT[, lapply(.SD, mean), by = Disease]
+
+```{r}
+DT <- data.table(A = c("A","A","A","B"), B = 1:99, C = 101:199, D = -50:49)
+DT[, lapply(.SD, length), by = A]
+```
+
+Intermediate and advanced topics (cont'd)
+========================================================
+- using := to replace by reference
+```{r}
+head(DT,2)
+DT[,B := B/2]
+head(DT,2)
+```
+
+
+
+
+
+
+
+
